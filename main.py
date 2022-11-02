@@ -1,7 +1,7 @@
 # Импортируем библиотеки
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
-
+from time import sleep
 
 # Создаём класс на основе QWidget
 class Calculator(QWidget):
@@ -73,6 +73,9 @@ class Calculator(QWidget):
         self.b_deriv = QPushButton('/', self)
         self.hbox_first.addWidget(self.b_deriv)
 
+        self.b_sqrt = QPushButton('sqrt', self)
+        self.hbox_first.addWidget(self.b_sqrt)
+
         self.b_result = QPushButton('=', self)
         self.hbox_first.addWidget(self.b_result)
 
@@ -93,35 +96,68 @@ class Calculator(QWidget):
         self.b_minus.clicked.connect(lambda: self._operation('-'))
         self.b_multiple.clicked.connect(lambda: self._operation('*'))
         self.b_deriv.clicked.connect(lambda: self._operation('/'))
+        self.b_sqrt.clicked.connect(lambda: self._operation('sqrt'))
         self.b_result.clicked.connect(self._result)
-    
+
+        # Начальные значения
+        self.num_1 = self.op = self.num_2 = None
+
     def _button(self, param) -> None:
         # Добавление цифры к строке
         line = self.input.text()
         self.input.setText(line + param)
-    
+
     def _operation(self, op) -> None:
         # Запоминаем число и операцию, зануляя строку для ввода нового числа
-        self.num_1 = float(self.input.text())
-        self.op = op
-        self.input.setText('')
-    
+        try:
+            float(self.input.text())
+        except ValueError:
+            if self.input.text() == '':
+                if op == '-':
+                    self.input.setText('-')
+                else:
+                    self.input.setText('')
+            else:
+                self.input.setText('Input error')
+                sleep(1)
+                self.input.setText('')
+        else:
+            self.num_1 = float(self.input.text())
+            self.op = op
+            self.input.setText('')
+
     def _result(self) -> None:
         # Обрабатываем второе число и выводим результат
-        self.num_2 = float(self.input.text())
-        if self.op == '+':
-            result = self.num_1 + self.num_2
-        elif self.op == '-':
-            result = self.num_1 * self.num_2
-        elif self.op == '*':
-            result = self.num_1 * self.num_2
-        elif self.op == '/':
-            try:
-                self.num_1 / self.num_2
-            except ZeroDivisionError:
-                result = 'Division on Zero'
-            else:
-                result = self.num_1 / self.num_2
+        try:
+            float(self.input.text())
+        except ValueError:
+            if self.op == 'sqrt':
+                if self.num_1 < 0:
+                    result = 'Root of Negative Number'
+                else:
+                    result = self.num_1 ** .5
+            elif self.input.text() == '':
+                result = "You don't input number 2. Try again"
+        else:
+            self.num_2 = float(self.input.text())
+            if self.op == '+':
+                result = self.num_1 + self.num_2
+            elif self.op == '-':
+                result = self.num_1 - self.num_2
+            elif self.op == '*':
+                result = self.num_1 * self.num_2
+            elif self.op == '/':
+                try:
+                    self.num_1 / self.num_2
+                except ZeroDivisionError:
+                    result = 'Division on Zero'
+                else:
+                    result = self.num_1 / self.num_2
+            elif self.op == 'sqrt':
+                if self.num_1 < 0:
+                    result = 'Root of Negative Number'
+                else:
+                    result = self.num_1 ** .5
 
         # Обработка ошибки
         if type(result) == float:
@@ -131,6 +167,8 @@ class Calculator(QWidget):
                 result = int(result)
             self.input.setText(str(result))
         else:
+            self.input.setText(result)
+            sleep(1)
             self.input.setText('')
 
 def main() -> None:
